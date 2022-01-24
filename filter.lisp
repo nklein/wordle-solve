@@ -31,8 +31,15 @@
                    (push ch (nth ii positional-nots))
                    (push ch somewheres))
                   (#\b
-                   (loop :for jj :below 5
-                      :do (push ch (nth jj positional-nots))))))
+                   ;; do in subsequent loop
+                   )))
+     :do (loop :for ch :in (coerce guess 'list)
+            :for rr :in (coerce result 'list)
+            :for ii :below 5
+            :when (and (char= rr #\b)
+                       (not (find ch somewheres)))
+            :do (loop :for jj :below 5
+                   :do (push ch (nth jj positional-nots))))
      :finally (return (calculate-filter-regex positions
                                               positional-nots
                                               somewheres))))
