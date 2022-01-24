@@ -39,33 +39,35 @@
 (defun collect-yellows (guess-result-list)
   (loop :with yellows := (loop :repeat 5 :collecting nil)
      :for (guess result) :in guess-result-list
-     :do (loop :for ch :in (coerce guess 'list)
+     :do (loop :with yellows-so-far := nil
+            :for ch :in (coerce guess 'list)
             :for rr :in (coerce result 'list)
             :for ii :from 0
             :when (char= rr #\y)
-            :do (push ch (nth ii yellows)))
+              :do (push ch yellows-so-far)
+            :when (or (char= rr #\y)
+                      (and (char= rr #\b)
+                           (find ch yellows-so-far)))
+              :do (push ch (nth ii yellows)))
      :finally (return (mapcar (lambda (ys)
                                 (remove-duplicates ys :test #'char=))
                               yellows))))
 
-(defun collect-blacks (guess-result-list greens yellows)
-  (declare (ignore greens))
+(defun collect-blacks (guess-result-list)
   (loop :for (guess result) :in guess-result-list
-     :appending (loop :with all-yellows := (reduce #'append yellows)
+     :appending (loop :with yellows-so-far := nil
                    :for ch :in (coerce guess 'list)
                    :for rr :in (coerce result 'list)
-                   :for yy :in yellows
+                   :when (char= rr #\y)
+                     :do (push ch yellows-so-far)
                    :when (and (char= rr #\b)
-                              (not (find ch yy :test #'char=))
-                              (not (find ch all-yellows :test #'char=)))
-                   :collecting ch
-                   :when (char= rr #\g)
-                     :do (setf all-yellows (remove ch all-yellows :count 1)))))
+                              (not (find ch yellows-so-far :test #'char=)))
+                   :collecting ch)))
 
 (defun calculate-filter-regex-from-guesses (guess-result-list)
   (let* ((greens (collect-greens guess-result-list))
          (yellows (collect-yellows guess-result-list))
-         (blacks (collect-blacks guess-result-list greens yellows)))
+         (blacks (collect-blacks guess-result-list)))
     (calculate-filter-regex greens yellows blacks guess-result-list)))
 
 (defun filter (words &rest guess-result-list)
