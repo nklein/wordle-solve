@@ -48,19 +48,24 @@
                                 (remove-duplicates ys :test #'char=))
                               yellows))))
 
-(defun collect-blacks (guess-result-list yellows)
+(defun collect-blacks (guess-result-list greens yellows)
+  (declare (ignore greens))
   (loop :for (guess result) :in guess-result-list
-     :appending (loop :for ch :in (coerce guess 'list)
+     :appending (loop :with all-yellows := (reduce #'append yellows)
+                   :for ch :in (coerce guess 'list)
                    :for rr :in (coerce result 'list)
                    :for yy :in yellows
                    :when (and (char= rr #\b)
-                              (not (find rr yy :test #'char=)))
-                   :collecting ch)))
+                              (not (find ch yy :test #'char=))
+                              (not (find ch all-yellows :test #'char=)))
+                   :collecting ch
+                   :when (char= rr #\g)
+                     :do (setf all-yellows (remove ch all-yellows :count 1)))))
 
 (defun calculate-filter-regex-from-guesses (guess-result-list)
   (let* ((greens (collect-greens guess-result-list))
          (yellows (collect-yellows guess-result-list))
-         (blacks (collect-blacks guess-result-list yellows)))
+         (blacks (collect-blacks guess-result-list greens yellows)))
     (calculate-filter-regex greens yellows blacks guess-result-list)))
 
 (defun filter (words &rest guess-result-list)
