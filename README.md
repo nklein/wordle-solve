@@ -31,6 +31,15 @@ So, then filtering on that information, as well:
                        '("dilly" "bgbgg))) => "bigly"
 
 
+If you already know that the answer is `"bigly"`, then you can check to see the results of a guess:
+
+    (score-guess "dilly" "bigly") => "bgbgg"
+
+Or you can play the whole game out in one step and get the number of guesses it took and the actual
+guesses used:
+
+    (play-game *w* "bigly") => 4, (("pares" "bbbbb") ("cunit" "bbbyb") ("dilly" "bgbgg") ("bigly" "ggggg"))
+
 
 
  [1]: https://www.powerlanguage.co.uk/wordle/
