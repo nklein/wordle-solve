@@ -11,4 +11,4 @@
                                   :summing (aref positional-entropies ii (char-index (char word ii))))
                  :for w-ent := (aref bag-entropies index)
                  :do (track-best:track word (+ (/ p-ent 5)
-                                               (* w-ent 5))))))))
+                                               w-ent)))))))
