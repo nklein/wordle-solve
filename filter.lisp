@@ -1,19 +1,22 @@
 (in-package #:wordle-solve)
 
-(defun calculate-yellow-lookahead (ch greens yellows)
-  (flet ((count-ch (list)
-           (count ch list :test #'eql)))
-    `(:POSITIVE-LOOKAHEAD
-      (:SEQUENCE
-       ,@(loop
-            :repeat (max (count-ch greens)
-                         (reduce #'max (mapcar #'count-ch yellows)))
-            :appending `((:GREEDY-REPETITION 0 nil :EVERYTHING) ,ch))))))
+(defun calculate-yellow-lookahead (ch greens guess-result-list)
+  (flet ((count-yellow-or-green-chs (guess-result)
+           (destructuring-bind (guess result) guess-result
+             (loop :for gg :in (coerce guess 'list)
+                :for rr :in (coerce result 'list)
+                :when (and (char= gg ch)
+                           (char/= rr #\b))
+                :sum 1))))
+    (let ((n (max (count ch greens :test #'eql)
+                  (reduce #'max (mapcar #'count-yellow-or-green-chs guess-result-list)))))
+      `(:POSITIVE-LOOKAHEAD
+        (:GREEDY-REPETITION ,n ,n (:SEQUENCE (:NON-GREEDY-REPETITION 0 nil :EVERYTHING) ,ch))))))
 
-(defun calculate-filter-regex (greens yellows blacks)
+(defun calculate-filter-regex (greens yellows blacks guess-result-list)
   `(:SEQUENCE
     ,@(loop :for ch :in (remove-duplicates (reduce #'append yellows))
-         :collecting (calculate-yellow-lookahead ch greens yellows))
+         :collecting (calculate-yellow-lookahead ch greens guess-result-list))
     :MODELESS-START-ANCHOR
     ,@(loop :for gg :in greens
          :for yy :in yellows
@@ -58,7 +61,7 @@
   (let* ((greens (collect-greens guess-result-list))
          (yellows (collect-yellows guess-result-list))
          (blacks (collect-blacks guess-result-list (reduce #'append yellows))))
-    (calculate-filter-regex greens yellows blacks)))
+    (calculate-filter-regex greens yellows blacks guess-result-list)))
 
 (defun filter (words &rest guess-result-list)
   "This takes a series of '(guess result) items where the guess is a word guessed and a result is a string of the form /[byg]{5}/ where b means the letter was black, y means the letter was yellow, and g means the letter was green."
