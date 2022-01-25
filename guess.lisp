@@ -5,10 +5,12 @@
          (indexes (calc-bag-indexes words))
          (bag-entropies (calc-bag-entropies words indexes)))
     (values (track-best:with-track-best (:keep keep :order-by-fn #'>)
-              (loop :for word :in words
+              (loop :with fudge := (sqrt (length words))
+                 :for word :in words
                  :for index :in indexes
                  :for p-ent := (loop :for ii :below 5
                                   :summing (aref positional-entropies ii (char-index (char word ii))))
                  :for w-ent := (aref bag-entropies index)
-                 :do (track-best:track word (+ p-ent
-                                               w-ent)))))))
+                 :do (track-best:track word
+                                       (+ (* p-ent 1)
+                                          (* w-ent fudge))))))))

@@ -73,17 +73,24 @@ And, we determine the Shannon entropy of each multiset.
 For our dictionary, the multiset `{ 3a + 2b }` would have entropy -3/4 log(3/4)
 and the multiset `{ 3a + b + c }` would have entropy -1/4 log(1/4).
 
-Then, our guess it the word in the dictionary that maximizes the total entropy gained from the position of its
-letters and its multiset. For example, the word `"aaabc"` would have be the sum of the following:
+Then, our guess it the word in the dictionary that maximizes the sum of the entropy gained from the
+position of its letters and a multiple of the entropy gained from the multiset.
+The multiple used here is the square root of the number of words in the current dictionary.
+For example, the word `"aaabc"` would have be the sum of these six terms:
 
   * 1st position: -3/4 log(3/4)
   * 2nd position: -1/2 log(1/2)
   * 3rd position: 0
   * 4th position: -3/4 log(3/4)
   * 5th position: -1/4 log(1/4)
-  * multiset: -1/4 log(1/4)
+  * 2 * multiset: -1/2 log(1/4)
 
-The word with the maximum entropy is our guess.
+The word with the maximum entropy is our guess. The scaling factor of the square root of the
+number of words in the dictionary was empircally chosen to make the contribution from the
+multiset about the same as the contribution from the positions. It is definitely a fudge
+factor. It has no justification in the mathematics. Maybe more useful would be to forgo the
+multiset in favor of just using the sum of the entropies of the first letter in the word
+appearing anywhere in any word, the second letter in the word appearing anywhere in any word, etc.
 
 Once we see how well the guess matched, we can filter down the dictionary to only those
 words that are still possible and guess again (including recalculating the entropies)
