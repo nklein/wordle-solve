@@ -4,7 +4,7 @@
   (let* ((positional-entropies (calc-positional-entropies words))
          (indexes (calc-bag-indexes words))
          (bag-entropies (calc-bag-entropies words indexes)))
-    (values (track-best:with-track-best (:keep keep)
+    (values (track-best:with-track-best (:keep keep :order-by-fn #'>)
               (loop :for word :in words
                  :for index :in indexes
                  :for p-ent := (loop :for ii :below 5
