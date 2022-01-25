@@ -70,9 +70,13 @@
          (blacks (collect-blacks guess-result-list)))
     (calculate-filter-regex greens yellows blacks guess-result-list)))
 
-(defun filter (words &rest guess-result-list)
-  "This takes a series of '(guess result) items where the guess is a word guessed and a result is a string of the form /[byg]{5}/ where b means the letter was black, y means the letter was yellow, and g means the letter was green."
+(defun filter* (words guess-result-list)
+  "This takes a list of '(guess result) items where the guess is a word guessed and a result is a string of the form /[byg]{5}/ where b means the letter was black, y means the letter was yellow, and g means the letter was green."
   (let ((regex (cl-ppcre:create-scanner (calculate-filter-regex-from-guesses guess-result-list))))
     (loop :for word :in words
        :when (funcall regex word 0 5)
        :collect word)))
+
+(defun filter (words &rest guess-result-list)
+  "This takes a series of '(guess result) items where the guess is a word guessed and a result is a string of the form /[byg]{5}/ where b means the letter was black, y means the letter was yellow, and g means the letter was green."
+  (filter* words guess-result-list))

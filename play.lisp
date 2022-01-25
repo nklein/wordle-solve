@@ -3,7 +3,7 @@
 (defun play-game (words target)
   (loop :with guess-results := nil
      :for n :from 1
-     :for guess := (guess (apply #'filter words guess-results))
+     :for guess := (guess (filter* words guess-results))
      :for result := (score-guess guess target)
      :until (null guess)
      :do (setf guess-results (append guess-results

@@ -2,6 +2,7 @@
   (:use #:cl)
   (:export #:read-words)
   (:export #:guess)
-  (:export #:filter)
+  (:export #:filter
+           #:filter*)
   (:export #:score-guess)
   (:export #:play-game))
