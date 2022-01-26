@@ -1,5 +1,8 @@
 (in-package #:wordle-solve)
 
+;;; This file specifies a guesser that attempts to guess the word
+;;; with the maximum entropy at each letter position and as a set of letters.
+
 (defun calc-positional-hists (words)
   (loop :with hists := (make-array '(5 26) :element-type 'integer :initial-element 0)
      :for word :in words
@@ -50,3 +53,18 @@
 
 (defun calc-bag-entropies (words &optional (indexes (calc-bag-indexes words)))
   (bag-hist-to-bag-entropies (calc-bag-hist words indexes)))
+
+(defun entropy-guess (words &optional (keep 1))
+  (let* ((positional-entropies (calc-positional-entropies words))
+         (indexes (calc-bag-indexes words))
+         (bag-entropies (calc-bag-entropies words indexes)))
+    (values (track-best:with-track-best (:keep keep :order-by-fn #'>)
+              (loop :with fudge := (sqrt (length words))
+                 :for word :in words
+                 :for index :in indexes
+                 :for p-ent := (loop :for ii :below 5
+                                  :summing (aref positional-entropies ii (char-index (char word ii))))
+                 :for w-ent := (aref bag-entropies index)
+                 :do (track-best:track word
+                                       (+ (* p-ent 1)
+                                          (* w-ent fudge))))))))

@@ -15,6 +15,9 @@
                  (:file "entropy" :depends-on ("package"
                                                "chars"
                                                "words"))
+                 (:file "elimination" :depends-on ("package"
+                                                   "chars"
+                                                   "words"))
                  (:file "guess" :depends-on ("package"
                                              "chars"
                                              "words"
@@ -22,6 +25,7 @@
                  (:file "filter" :depends-on ("package"))
                  (:file "score" :depends-on ("package"))
                  (:file "play" :depends-on ("package"
-                                            "score"))
+                                            "score"
+                                            "entropy"))
                  (:file "stats" :depends-on ("package"
                                              "play"))))
