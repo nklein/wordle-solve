@@ -2,7 +2,7 @@
 (asdf:defsystem #:wordle-solve
     :author "Patrick Stein <pat@nklein.com>"
     :maintainer "Patrick Stein <pat@nklein.com>"
-    :version "0.3.20220224"
+    :version "0.4.20220126"
     :licence "UNLICENSE"
     :depends-on (#:cl-ppcre #:track-best)
     :components ((:static-file "UNLICENSE.txt")
@@ -15,13 +15,21 @@
                  (:file "entropy" :depends-on ("package"
                                                "chars"
                                                "words"))
+                 (:file "elimination" :depends-on ("package"
+                                                   "chars"
+                                                   "words"))
                  (:file "guess" :depends-on ("package"
                                              "chars"
                                              "words"
                                              "entropy"))
                  (:file "filter" :depends-on ("package"))
                  (:file "score" :depends-on ("package"))
+                 (:file "iterator" :depends-on ("package"
+                                                "filter"
+                                                "score"))
                  (:file "play" :depends-on ("package"
-                                            "score"))
+                                            "score"
+                                            "entropy"
+                                            "iterator"))
                  (:file "stats" :depends-on ("package"
                                              "play"))))
