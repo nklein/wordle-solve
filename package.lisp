@@ -7,4 +7,5 @@
   (:export #:filter
            #:filter*)
   (:export #:score-guess)
+  (:export #:make-game-iterator)
   (:export #:play-game))

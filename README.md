@@ -1,16 +1,53 @@
-WORDLE-SOLVE
-============
+WORDLE-SOLVE v0.4.20220126
+==========================
 
 This is meant to take in a list of words and play the game [Wordle][1] (in hard mode).
 
-For example, here is how you might run it for a game where the answer is `"bigly"`:
+The simplest way to use this is to create a game iterator and give it a list of words to guess from.
 
-    (defparameter *w* (read-words "/path/to/dictionary/with/one/word/per/line"))
+    (defparameter *w* (read-words "/path/to/word/list/one/word/per/line"))
 
-    (guess *w*) => "pares"
+    (defparameter *it* (make-game-iterator *w*))
+
+The `#'make-game-iterator` function can also take a `:guesser` parameter to specify a guesser.
+The available guessers are described in the next section.
+
+To make an initial guess, invoke the iterator with no argument:
+
+    (funcall *it*) => "pares"
 
 Note: Your guesses will differ depending on what words are in your word list.
 I was using the list of five letter words provided at [Word Game Dictionary][2].
+
+After you type the `pares` into Wordle, it will highlight the letters as either
+green, yellow, or black. Call the iterator again passing it a string representation
+of the resulting color pattern using `#\g` for green, `#\y` for yellow, and `#\b`
+for black.
+
+    (funcall *it* "bbbbb") => "cunit"
+
+Repeat this process until you have found the answer.
+
+    (funcall *it* "bbbyb") => "dilly"
+    (funcall *it* "bgbgg") => "bigly"
+
+You can reset the guesser by again invoking it with no arguments or by specifying
+that the last guess was completely correct by passing in `"ggggg"`.
+
+Here is an example run looking for a word that is not in the dictionary. If the
+word were `"xyzzy"` (and that is not in the dictionary) then a run might look like:
+
+    (funcall *it*) => "pares"
+    (funcall *it* "bbbbb") => "cunit"
+    (funcall *it* "bbbbb") => "booby"
+    (funcall *it* "bbbbg") => NIL
+
+If you want to have finer control over what is happening, you can use the `#'guess`
+(or one of the other guesser functions) and `#'filter`
+to explicitly manipulate the dictionary between each move.
+Using the above dictionary `*w*` trying to guess `"bigly"`, you might do the following:
+
+    (guess *w*) => "pares"
 
 Entering this guess in the game results in all letters marked black.
 So, then filtering on the new information:
@@ -23,13 +60,13 @@ So, then filtering on that information, too:
     (guess (filter *w* '("pares" "bbbbb")
                        '("cunit" "bbbyb"))) => "dilly"
 
-Entering this guess results in the `i`, the second `l`, and the `y` marked green while the other letters are marked black.
+Entering this guess results in the `i`, the second `l`, and the `y` marked green while
+the other letters are marked black.
 So, then filtering on that information, as well:
 
     (guess (filter *w* '("pares" "bbbbb")
                        '("cunit" "bbbyb")
                        '("dilly" "bgbgg))) => "bigly"
-
 
 If you already know that the answer is `"bigly"`, then you can check to see the results of a guess:
 
