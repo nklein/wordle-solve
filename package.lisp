@@ -3,6 +3,7 @@
   (:export #:read-words)
   (:export #:entropy-guess)
   (:export #:elimination-guess)
+  (:export #:greedy-guess)
   (:export #:guess)
   (:export #:filter
            #:filter*)

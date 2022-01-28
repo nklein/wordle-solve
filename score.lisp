@@ -7,20 +7,29 @@
 
 (defun %incorporate-yellows (guess target greens)
 
-  (loop :with target := (loop :for tt :in target
-                           :for gg :in greens
-                           :unless gg
-                           :collect tt)
-     :for green :in greens
-     :for gg :in guess
-     :for found := (and (not green)
-                        (find gg target))
-     :when found
-       :do (setf target (remove gg target :test #'char= :count 1))
-     :collecting (cond
-                   (green #\g)
-                   (found #\y)
-                   (t #\b))))
+  (labels ((remove-nth (list n)
+             (cond
+               ((or (null list)
+                    (zerop n))
+                (cdr list))
+               (t
+                (prog1
+                    list
+                  (setf (cdr list) (remove-nth (cdr list) (1- n))))))))
+    (loop :with target := (loop :for tt :in target
+                             :for gg :in greens
+                             :unless gg
+                             :collect tt)
+       :for green :in greens
+       :for gg :in guess
+       :for pos := (and (not green)
+                        (position gg target))
+       :when pos
+       :do (setf target (remove-nth target pos))
+       :collecting (cond
+                     (green #\g)
+                     (pos #\y)
+                     (t #\b)))))
 
 (defun score-guess (guess target)
   (let ((guess (coerce guess 'list))

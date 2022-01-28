@@ -1,4 +1,4 @@
-WORDLE-SOLVE v0.4.20220126
+WORDLE-SOLVE v0.5.20220127
 ==========================
 
 This is meant to take in a list of words and play the game [Wordle][1] (in hard mode).
@@ -10,7 +10,7 @@ The simplest way to use this is to create a game iterator and give it a list of 
     (defparameter *it* (make-game-iterator *w*))
 
 The `#'make-game-iterator` function can also take a `:guesser` parameter to specify a guesser.
-The available guessers are described in the next section.
+The available guessers are described in a later section.
 
 To make an initial guess, invoke the iterator with no argument:
 
@@ -86,6 +86,76 @@ For the dictionary of 9330 words that I am using:
  [1]: https://www.powerlanguage.co.uk/wordle/
  [2]: https://www.wordgamedictionary.com/word-lists/
 
+ALL EXPORTED FUNCTIONS
+----------------------
+
+
+The `#'READ-WORDS` function takes a pathname and reads the file specified by `PATHNAME`.
+It assumes one word per line with no whitespace (beyond the newlines).
+It rejects any words which are not five lowercase letters.
+
+    (read-words pathname)
+
+The `#'ENTROPY-GUESS`, `#'ELIMINATION-GUESS`, and `#'GREEDY-GUESS` functions are
+guesser functions.
+They are described more in the following section.
+They each take a list of `WORDS` and an optional number of guesses to `KEEP`.
+
+    (entropy-guess words &optional (keep 1))
+    (elimination-guess words &optional (keep 1))
+    (greedy-guess words &optional (keep 1))
+
+The `#'GUESS` function is simply a wrapper around a reasonable guesser.
+At the moment, it simply calls `#'ENTROPY-GUESS`.
+
+    (guess words &optional (keep 1))
+
+The `#'FILTER` and `#'FILTER*` functions take a list of `WORDS` and a `GUESS-RESULTS` list.
+The `GUESS-RESULTS` list is made up of lists of the form `(GUESS RESULT)` where the
+`GUESS` is a string of the guess made and the `RESULT` is a string encoding the colors
+that Wordle assigned to this guess.
+The `RESULT` must be five letters and made up of the characters `#\g` (to indicate green),
+`#\y` (to indicate yellow), and `#\b` (to indicate black).
+The functions return the subset of the `WORDS` list that is consistent with all of the guess results so far.
+
+    (filter words &rest guess-results)
+    (filter* words guess-results)
+
+The `SCORE-GUESS` function takes a `GUESS` string and a `TARGET` string and returns a string
+encoding the colors that Wordle would assign to that `GUESS` if the goal were the `TARGET` string.
+
+    (score-guess guess target)
+
+The `MAKE-GAME-ITERATOR` function takes in an initial `DICTIONARY` list of words.
+You can specify a `GUESSER` and an `INITIAL-GUESS` if desired.
+This function returns an iterator function.
+When called with no arguments, the iterator function resets to using the entire dictionary and
+returns the `INITIAL-GUESS` if specified or the `GUESSER`'s guess from the entire dictionary.
+When called with a string argument, the iterator function interprets the argument as an encoding
+of the coloring that Wordle gave to the previous guess.
+The string argument must be five letters and made up of the characters `#\g` (to indicate green),
+`#\y` (to indicate yellow), and `#\b` (to indicate black).
+The iterator function then uses this information to filter down the dictionary and ask the
+`GUESSER` for a new guess from the filtered dictionary.
+
+    (make-game-iterator dictionary &key (guesser 'guess) initial-guess)
+
+The `INITIAL-GUESS` option can make the `#'GREEDY-GUESS` guesser a viable option.
+If you use the `"lares"` guess specified above as the `INITIAL-GUESS`,
+then you will likely reduce my 9330 word dictionary to just a few hundred words.
+With only a few hundred words, the `#'GREEDY-GUESS` will come up with a guess in under a minute.
+
+The `PLAY-GAME` function takes a list of `WORDS` and a `TARGET` word.
+You can specify a `GUESSER` if desired.
+This function then uses the `GUESSER` to try to guess the `TARGET` from the given `WORDS`.
+If the `GUESSER` succeeds in finding the word, this function returns two values:
+the number of guesses required, and a list of `(GUESS RESULT)` lists of the guesses taken
+along with the result of scoring the guess against the `TARGET` word.
+If the `GUESSER` does not succeed in finding the word, this function returns `NIL`.
+
+    (play-game words target &optional (guesser 'guess))
+
+
 METHOD
 ------
 
@@ -134,6 +204,19 @@ Maximum guesses required to find a word that is in the dictionary:
   * `elimination-guess`: 16
   * `car`: 15
   * `random-elt`: 14
+
+There is another guessing function `#'greedy-guess` which brute-forces through the whole
+dictionary looking for the word which actually minimizes the expected size of the remaining
+dictionary by trying each word against every other word in the dictionary.
+It is prohibitively time-consuming.
+It takes more than a day to make the first guess with my default dictionary.
+That said, the initial guess only depends on the dictionary, so you can precompute it.
+You can take advantage of the compute time that I spent and start with the guess:
+`"lares"` which is expected to keep only 2.2% of my dictionary (assuming the target
+word was chosen by uniform, random selection from the words in my dictionary).
+With a smaller dictionary of more human words, the greedy guess is `"tares"`, which
+is expected to keep only 2.3% of that smaller dictionary. The even more human guess
+`"rates"` does almost as well (expecting to keep only 2.4% of either dictionary).
 
 ENTROPY-GUESS IMPLEMENTATION
 ----------------------------
