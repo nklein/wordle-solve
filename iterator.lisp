@@ -1,6 +1,6 @@
 (in-package #:wordle-solve)
 
-(defun make-game-iterator (dictionary &key (guesser #'guess))
+(defun make-game-iterator (dictionary &key (guesser #'guess) initial-guess)
   (let ((words dictionary)
         (guess nil))
     (lambda (&optional (result "ggggg"))
@@ -8,7 +8,8 @@
       (cond
         ((string= result "ggggg")
          (setq words dictionary
-               guess (funcall guesser words)))
+               guess (or initial-guess
+                         (funcall guesser words))))
         (t
          (setq words (filter words (list guess result))
                guess (funcall guesser words)))))))
