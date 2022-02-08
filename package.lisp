@@ -9,4 +9,7 @@
            #:filter*)
   (:export #:score-guess)
   (:export #:make-game-iterator)
+  (:export #:precompute-guesser-tree
+           #:prune-guess-tree
+           #:make-guess-tree-iterator)
   (:export #:play-game))
