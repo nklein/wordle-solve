@@ -1,4 +1,4 @@
-WORDLE-SOLVE v0.5.20220127
+WORDLE-SOLVE v0.6.20220208
 ==========================
 
 This is meant to take in a list of words and play the game [Wordle][1] (in hard mode).
@@ -168,7 +168,7 @@ Then, it eliminates all words from the dictionary that are ruled out by that res
 Now, it invokes the guessing function again with the new, smaller dictionary.
 
 For example, suppose the dictionary is just these five words:
-    `"bills"`, `"billy"`, `"skill"`, `"wills"`, and `"willy"`
+  `"bills"`, `"billy"`, `"skill"`, `"wills"`, and `"willy"`
 
 Let us suppose the target word is `"billy"`
 and the guesser chose `"skill"` for its first guess.
@@ -218,11 +218,10 @@ With a smaller dictionary of more human words, the greedy guess is `"tares"`, wh
 is expected to keep only 2.3% of that smaller dictionary. The even more human guess
 `"rates"` does almost as well (expecting to keep only 2.4% of either dictionary).
 
-ENTROPY-GUESS IMPLEMENTATION
-----------------------------
+### ENTROPY-GUESS IMPLEMENTATION
 
 For this example, let us again suppose the dictionary is just these five words:
-    `"bills"`, `"billy"`, `"skill"`, `"wills"`, and `"willy"`
+  `"bills"`, `"billy"`, `"skill"`, `"wills"`, and `"willy"`
 
 We go through each letter position (1st, 2nd, 3rd, 4th, 5th) and
 determine the Shannon entropy of a given letter showing up in that position.
@@ -255,11 +254,10 @@ number of words in the dictionary was empircally chosen to make the contribution
 multiset about the same as the contribution from the positions. It is definitely a fudge
 factor. It has no justification in the mathematics.
 
-ELIMINATION-GUESS IMPLEMENTATION
---------------------------------
+### ELIMINATION-GUESS IMPLEMENTATION
 
 For this example, let us again suppose the dictionary is just these five words:
-    `"bills"`, `"billy"`, `"skill"`, `"wills"`, and `"willy"`
+  `"bills"`, `"billy"`, `"skill"`, `"wills"`, and `"willy"`
 
 This guess implementation tries to determine what letters in given positions
 would most drastically eliminate words from the dictionary. It does this by
@@ -303,3 +301,51 @@ For the word `"skill"`, this then means 11% is expected to be retained.
 So, we expect that 89% will be eliminated if we guess `"skill"`.
 This is, of course, an overestimate. Much of that is because of our tiny dictionary.
 The remainder of that overestimation was our assumption that the probabilities are independent.
+
+### GREEDY-GUESS IMPLEMENTATION
+
+For this example, let us suppose the dictionary is just these five words:
+  `"bills"`, `"kills"`, `"pills"`, `"skill"`, and `"twins"`
+
+This guess implementation tries to determine which word in the list of choices
+eliminates the most words from the dictionary. The elimination guesser above
+did this in a sort of one-letter-at-a-time approach. This does brute-force
+try each word in the dictionary as a guess and see which word results in
+the smallest expected resulting dictionary.
+
+So, this guess would score the guess `"kills"` as follows.
+It would go through each word in the dictionary and assume the word is the target.
+It would then find out how many words in the dictionary would get the same
+result that `"kills"` did on that target.
+It would then average these numbers across all possible targets.
+
+So, for example, if the target were `"kills"`, the result of guessing
+`"bills"` would be `"bgggg"`. Getting a result of `"bgggg"` would rule
+out `"skill"` and `"bills"` leaving the two words `"kills"` and `"pills"`
+in the dictionary. Now, for all possible targets in the dictionary, guessing
+`"bills"` leads to:
+
+* target: `"bills"`, result: `"ggggg"`, dictionary: `("bills")`
+* target: `"kills"`, result: `"bgggg"`, dictionary: `("kills" "pills")`
+* target: `"pills"`, result: `"bgggg"`, dictionary: `("kills" "pills")`
+* target: `"skill"`, result: `"byygy"`, dictionary: `("skills")`
+* target: `"twins"`, result: `"bybbg"`, dictionary: `("twins")`
+
+So, upon guessing `"bills"`, one would expect the dictionary to be reduced
+to 1.4 words, on average. However, if we had guessed `"twins"` we could
+only expect the dictionary to be reduced to 2.2 words. So, `"bills"` is
+the better guess.
+
+PRECOMPUTING GUESSES
+--------------------
+
+If your guesser is deterministic and your dictionary is fixed, you can
+precompute an entire guess tree. This trades processor time in exchange
+for memory.
+
+    (defparameter *tree* (precompute-guesser-tree words guesser))
+    (defparameter *it* (make-guess-tree-iterator *tree*))
+
+From there, you can use the iterator just as if you had done:
+
+    (defparameter *it* (make-game-iterator words :guesser guesser))
