@@ -54,17 +54,20 @@
 (defun calc-bag-entropies (words &optional (indexes (calc-bag-indexes words)))
   (bag-hist-to-bag-entropies (calc-bag-hist words indexes)))
 
-(defun entropy-guess (words &optional (keep 1))
-  (let* ((positional-entropies (calc-positional-entropies words))
-         (indexes (calc-bag-indexes words))
-         (bag-entropies (calc-bag-entropies words indexes)))
-    (values (track-best:with-track-best (:keep keep :order-by-fn #'>)
+(defun entropy-guess (words &key (keep 1) answers)
+  (let* ((answers (or answers
+                      words))
+         (positional-entropies (calc-positional-entropies answers))
+         (indexes (calc-bag-indexes answers))
+         (bag-entropies (calc-bag-entropies answers indexes)))
+    (values (track-best:with-track-best (:keep keep :order-by-fn #'preferred>)
               (loop :with fudge := (sqrt (length words))
                  :for word :in words
-                 :for index :in indexes
                  :for p-ent := (loop :for ii :below 5
                                   :summing (aref positional-entropies ii (char-index (char word ii))))
-                 :for w-ent := (aref bag-entropies index)
-                 :do (track-best:track word
-                                       (+ (* p-ent 1)
-                                          (* w-ent fudge))))))))
+                 :for w-ent := (aref bag-entropies (word-bag-index word))
+                 :for score := (make-preferred (+ (* p-ent 1)
+                                                  (* w-ent fudge))
+                                               (or (eql words answers)
+                                                   (not (null (find word answers :test #'string=)))))
+                 :do (track-best:track word score))))))

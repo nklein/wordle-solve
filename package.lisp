@@ -12,4 +12,5 @@
   (:export #:precompute-guesser-tree
            #:prune-guess-tree
            #:make-guess-tree-iterator)
-  (:export #:play-game))
+  (:export #:play-game)
+  (:export #:calculate-tree-stats))

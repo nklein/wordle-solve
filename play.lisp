@@ -1,9 +1,12 @@
 (in-package #:wordle-solve)
 
-(defun play-game (words target &key (guesser #'entropy-guess))
-  (loop :with iterator := (make-game-iterator words :guesser guesser)
+(defun play-game (target &key (guesser #'entropy-guess) words answers iterator)
+  (assert (or iterator
+              (and words guesser)))
+  (loop :with game-iterator := (or iterator
+                                   (make-game-iterator words :guesser guesser :answers answers))
      :for n :from 1
-     :for guess := (funcall iterator) :then (funcall iterator result)
+     :for guess := (funcall game-iterator) :then (funcall game-iterator result)
      :for result := (score-guess guess target)
      :until (null guess)
      :collect (list guess result) :into guess-results

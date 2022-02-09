@@ -58,10 +58,12 @@
                                               (* bb bb)))))  ;; probability of black * kept if black
      :finally (return keeps)))
 
-(defun elimination-guess (words &optional (keep 1))
-  (let ((positional-result-expected-keeps (calc-positional-result-expected-keeps
-                                           (calc-positional-result-hists words))))
-    (values (track-best:with-track-best (:keep keep :order-by-fn #'>)
+(defun elimination-guess (words &key (keep 1) answers)
+  (let* ((answers (or answers
+                      words))
+         (hists (calc-positional-result-hists answers))
+         (positional-result-expected-keeps (calc-positional-result-expected-keeps hists)))
+    (values (track-best:with-track-best (:keep keep :order-by-fn #'preferred>)
               (loop :for word :in words
                  :for positional-keeps := (loop :for ii :below 5
                                              :collecting (aref positional-result-expected-keeps
@@ -69,4 +71,7 @@
                                                                (char-index (char word ii))))
                  :for elims := (- 1
                                   (reduce #'* positional-keeps))
-                 :do (track-best:track word elims))))))
+                 :for score := (make-preferred elims
+                                               (or (eql answers word)
+                                                   (not (null (member word answers :test #'string=)))))
+                 :do (track-best:track word score))))))
