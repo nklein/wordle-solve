@@ -1,4 +1,4 @@
-WORDLE-SOLVE v1.0.20220208
+WORDLE-SOLVE v1.0.20220209
 ==========================
 
 This is meant to take in a list of words and play the game [Wordle][1] (in hard mode).
@@ -206,6 +206,7 @@ Average guesses required to find a word that is in the answer list:
   * `elimination-guess`: 4.08
   * `car`: 4.89
   * `random-elt`: 4.90
+  * `greedy-guess`: 3.66
 
 Maximum guesses required to find a word that is in the answer list:
 
@@ -213,6 +214,7 @@ Maximum guesses required to find a word that is in the answer list:
   * `elimination-guess`: 10 (e.g. `"wacky"`)
   * `car`: 13 (e.g. `"wight"`)
   * `random-elt`: 11 (e.g. `"bunny"`) (your results may vary)
+  * `greedy-guess`: 8 (e.g. `"goner"`)
 
 There is another guessing function `#'greedy-guess` which brute-forces through the whole
 dictionary looking for the word which actually minimizes the expected size of the remaining
