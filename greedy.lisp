@@ -9,13 +9,18 @@
 ;;; makes probabilistic guesses based on individual letter positions.
 ;;; This brute-forces using whole words at a time.
 
-(defun greedy-guess (words &optional (keep 1))
-  (values (track-best:with-track-best (:keep keep :order-by-fn #'<)
-            (when words
-              (loop :with nn := (length words)
-                 :for guess :in words
-                 :for remaining := (/ (loop :for target :in words
-                                         :for result := (score-guess guess target)
-                                         :summing (length (filter words (list guess result))))
-                                      nn)
-                 :do (track-best:track guess remaining))))))
+(defun greedy-guess (words &key (keep 1) answers)
+  (let ((answers (or answers
+                     words)))
+    (values (track-best:with-track-best (:keep keep :order-by-fn #'preferred<)
+              (when words
+                (loop :with nn := (length answers)
+                   :for guess :in words
+                   :for remaining := (/ (loop :for target :in answers
+                                           :for result := (score-guess guess target)
+                                           :summing (length (filter answers (list guess result))))
+                                        nn)
+                   :for score := (make-preferred remaining
+                                                 (or (eql words answers)
+                                                     (not (null (member guess answers :test #'string=)))))
+                   :do (track-best:track guess score)))))))

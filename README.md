@@ -1,4 +1,4 @@
-WORDLE-SOLVE v0.6.20220208
+WORDLE-SOLVE v1.0.20220208
 ==========================
 
 This is meant to take in a list of words and play the game [Wordle][1] (in hard mode).
@@ -11,13 +11,21 @@ The simplest way to use this is to create a game iterator and give it a list of 
 
 The `#'make-game-iterator` function can also take a `:guesser` parameter to specify a guesser.
 The available guessers are described in a later section.
+Additionally, it can also take an `:answers` parameter which is the subset of the valid guesses
+which could also be an answer.
+If `:answers` is not specified, then the guessers assume that any word is `WORDS` is a potential
+solution to the puzzle.
+
+Wordle has 12,972 words it will accept as a guess.
+Only 2314 of those words will ever be the actual target of the puzzle.
 
 To make an initial guess, invoke the iterator with no argument:
 
     (funcall *it*) => "pares"
 
 Note: Your guesses will differ depending on what words are in your word list.
-I was using the list of five letter words provided at [Word Game Dictionary][2].
+There are a number of places online that give the list of possible Wordle
+targets and the list of acceptable Wordle guesses.
 
 After you type the `pares` into Wordle, it will highlight the letters as either
 green, yellow, or black. Call the iterator again passing it a string representation
@@ -78,13 +86,7 @@ guesses used:
     (play-game *w* "bigly") => 4, (("pares" "bbbbb") ("cunit" "bbbyb") ("dilly" "bgbgg") ("bigly" "ggggg"))
 
 
-For the dictionary of 9330 words that I am using:
-  * the average word takes just over 4.79 guesses,
-  * the hardest word to guess is `"zills"` which requires 16 guesses, and
-  * the first guess is always `"sores"`.
-
  [1]: https://www.powerlanguage.co.uk/wordle/
- [2]: https://www.wordgamedictionary.com/word-lists/
 
 ALL EXPORTED FUNCTIONS
 ----------------------
@@ -101,14 +103,14 @@ guesser functions.
 They are described more in the following section.
 They each take a list of `WORDS` and an optional number of guesses to `KEEP`.
 
-    (entropy-guess words &optional (keep 1))
-    (elimination-guess words &optional (keep 1))
-    (greedy-guess words &optional (keep 1))
+    (entropy-guess words &key (keep 1) answers)
+    (elimination-guess words &key (keep 1) answers)
+    (greedy-guess words &key (keep 1) answers)
 
 The `#'GUESS` function is simply a wrapper around a reasonable guesser.
 At the moment, it simply calls `#'ENTROPY-GUESS`.
 
-    (guess words &optional (keep 1))
+    (guess words &key answers &allow-other-keys)
 
 The `#'FILTER` and `#'FILTER*` functions take a list of `WORDS` and a `GUESS-RESULTS` list.
 The `GUESS-RESULTS` list is made up of lists of the form `(GUESS RESULT)` where the
@@ -127,7 +129,7 @@ encoding the colors that Wordle would assign to that `GUESS` if the goal were th
     (score-guess guess target)
 
 The `MAKE-GAME-ITERATOR` function takes in an initial `DICTIONARY` list of words.
-You can specify a `GUESSER` and an `INITIAL-GUESS` if desired.
+You can specify a `GUESSER`, an `INITIAL-GUESS`, and a list of `ANSWERS` if desired.
 This function returns an iterator function.
 When called with no arguments, the iterator function resets to using the entire dictionary and
 returns the `INITIAL-GUESS` if specified or the `GUESSER`'s guess from the entire dictionary.
@@ -138,22 +140,23 @@ The string argument must be five letters and made up of the characters `#\g` (to
 The iterator function then uses this information to filter down the dictionary and ask the
 `GUESSER` for a new guess from the filtered dictionary.
 
-    (make-game-iterator dictionary &key (guesser 'guess) initial-guess)
+    (make-game-iterator dictionary &key (guesser 'guess) initial-guess answers)
 
-The `INITIAL-GUESS` option can make the `#'GREEDY-GUESS` guesser a viable option.
+The `INITIAL-GUESS` option can make the compute-intensive `#'GREEDY-GUESS` guesser a viable option.
 If you use the `"lares"` guess specified above as the `INITIAL-GUESS`,
 then you will likely reduce my 9330 word dictionary to just a few hundred words.
 With only a few hundred words, the `#'GREEDY-GUESS` will come up with a guess in under a minute.
 
 The `PLAY-GAME` function takes a list of `WORDS` and a `TARGET` word.
-You can specify a `GUESSER` if desired.
+You can specify a `GUESSER` and a list of `ANSWERS` if desired.
 This function then uses the `GUESSER` to try to guess the `TARGET` from the given `WORDS`.
-If the `GUESSER` succeeds in finding the word, this function returns two values:
-the number of guesses required, and a list of `(GUESS RESULT)` lists of the guesses taken
-along with the result of scoring the guess against the `TARGET` word.
-If the `GUESSER` does not succeed in finding the word, this function returns `NIL`.
+This function returns two values.
+The first value is the number of guesses required for the guesser to find the target or `NIL`
+if the guesser failed to find the target.
+The second value is a list of `(GUESS RESULT)` lists of the guesses taken
+along with the result of playing that guess against the `TARGET` word.
 
-    (play-game words target &optional (guesser 'guess))
+    (play-game words target &optional (guesser 'guess) answers)
 
 
 METHOD
@@ -186,24 +189,30 @@ which letters in particular positions would most drastically reduce the size of 
 dictionary. It then assumes the information about each letter position is independent
 (which, it isn't, for the record).
 
-Other valid choices for guessing functions are `#'cl:car` and `#'alexandria:random-elt`.
+Other valid choices for guessing functions are `#'cl:car` and `#'alexandria:random-elt`, or
+rather wrapping those in a short lambda to ignore keyword arguments:
+
+    (lambda (ws &key &allow-other-keys) (car ws))
+    (lambda (ws &key &allow-other-keys) (alexandria:random-elt ws))
+
 In fact, those simplistic guessing functions do almost as well as the more computationally
 expensive functions above.
-Here is how the above algorithms compare using the dictionary from Word Game Dictionary.
+Here is how the above algorithms compare using the Wordle list of acceptable guesses and
+the list of Wordle answers.
 
-Average guesses required to find a word that is in the dictionary:
+Average guesses required to find a word that is in the answer list:
 
-  * `entropy-guess`: 4.57
-  * `elimination-guess`: 5.03
-  * `car`: 5.32
+  * `entropy-guess`: 3.72
+  * `elimination-guess`: 4.08
+  * `car`: 4.89
   * `random-elt`: 4.90
 
-Maximum guesses required to find a word that is in the dictionary:
+Maximum guesses required to find a word that is in the answer list:
 
-  * `entropy-guess`: 15
-  * `elimination-guess`: 16
-  * `car`: 15
-  * `random-elt`: 14
+  * `entropy-guess`: 8 (e.g. `"mower"`)
+  * `elimination-guess`: 10 (e.g. `"wacky"`)
+  * `car`: 13 (e.g. `"wight"`)
+  * `random-elt`: 11 (e.g. `"bunny"`) (your results may vary)
 
 There is another guessing function `#'greedy-guess` which brute-forces through the whole
 dictionary looking for the word which actually minimizes the expected size of the remaining
@@ -217,6 +226,7 @@ word was chosen by uniform, random selection from the words in my dictionary).
 With a smaller dictionary of more human words, the greedy guess is `"tares"`, which
 is expected to keep only 2.3% of that smaller dictionary. The even more human guess
 `"rates"` does almost as well (expecting to keep only 2.4% of either dictionary).
+For the Wordle dictionary, the best first guess it `"raise"`.
 
 ### ENTROPY-GUESS IMPLEMENTATION
 
@@ -343,9 +353,9 @@ If your guesser is deterministic and your dictionary is fixed, you can
 precompute an entire guess tree. This trades processor time in exchange
 for memory.
 
-    (defparameter *tree* (precompute-guesser-tree words guesser))
+    (defparameter *tree* (precompute-guesser-tree words guesser :answers answers))
     (defparameter *it* (make-guess-tree-iterator *tree*))
 
 From there, you can use the iterator just as if you had done:
 
-    (defparameter *it* (make-game-iterator words :guesser guesser))
+    (defparameter *it* (make-game-iterator words :guesser guesser :answers answers))
