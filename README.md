@@ -226,6 +226,7 @@ word was chosen by uniform, random selection from the words in my dictionary).
 With a smaller dictionary of more human words, the greedy guess is `"tares"`, which
 is expected to keep only 2.3% of that smaller dictionary. The even more human guess
 `"rates"` does almost as well (expecting to keep only 2.4% of either dictionary).
+For the Wordle dictionary, the best first guess it `"raise"`.
 
 ### ENTROPY-GUESS IMPLEMENTATION
 
