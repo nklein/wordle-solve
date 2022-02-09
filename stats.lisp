@@ -1,6 +1,6 @@
 (in-package #:wordle-solve)
 
-(defun calculate-tree-stats (words &key (guesser #'guess) answers initial-guess)
+(defun calculate-tree-stats (words &key (guesser #'guess) answers initial-guess iterator)
   (let* ((answers (or answers
                       words))
          (max 0)
@@ -8,10 +8,11 @@
          (sum 0)
          (max-cntr (max (/ (length answers) 100) 10))
          (cntr 0)
-         (iterator (make-game-iterator words
-                                       :guesser guesser
-                                       :answers answers
-                                       :initial-guess initial-guess)))
+         (iterator (or iterator
+                       (make-game-iterator words
+                                           :guesser guesser
+                                           :answers answers
+                                           :initial-guess initial-guess))))
     (dolist (target answers (values (coerce (/ sum (length answers)) 'double-float)
                                     max
                                     max-word))
